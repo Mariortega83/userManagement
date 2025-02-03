@@ -54,26 +54,27 @@ class SuperAdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'role' => 'required|in:user,admin',
+            'password' => 'nullable|min:8|confirmed', // Validación de la contraseña
         ]);
-
+    
         // Buscar el usuario y actualizar los datos
         $user = User::findOrFail($id);
         $user->name = $request->input('name');
         $user->email = $request->input('email');
         $user->role = $request->input('role');
-
-        // Si el correo ha cambiado, podemos establecer email_verified_at a null
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;  // Asegúrate de que el correo deba ser verificado nuevamente
-            $user->sendEmailVerificationNotification(); // Enviar correo de verificación
+    
+        // Si el campo de contraseña no está vacío, actualizamos la contraseña
+        if ($request->has('password') && $request->input('password') !== '') {
+            $user->password = bcrypt($request->input('password'));
         }
-
+    
         // Guardar los cambios
         $user->save();
-
-        // Redirigir a la vista con un mensaje de éxito
-        return redirect()->route('superAdmin.index', compact('users'))->with('success', 'Usuario actualizado correctamente.');
+    
+        // Redirigir a la página anterior con un mensaje de éxito
+        return back()->with('success', 'Usuario actualizado correctamente.');
     }
+    
 
 
     public function destroy($id)
@@ -95,5 +96,18 @@ class SuperAdminController extends Controller
 
         // Devolver una respuesta
         return response()->json(['message' => 'Usuario verificado correctamente.'], 200);
+    }
+
+    public function desVerify($id)
+    {
+        // Buscar al usuario por su ID
+        $user = User::findOrFail($id);
+
+        // Verificar el correo electrónico del usuario
+        $user->email_verified_at = null; // Establece la fecha y hora actuales como verificación
+        $user->save();
+
+        // Devolver una respuesta
+        return response()->json(['message' => 'Usuario desverificado correctamente.'], 200);
     }
 }

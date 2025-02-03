@@ -11,7 +11,7 @@
 
     <!-- Incluir las modales -->
     @include('modal.create')
-    @include('modal.edit')
+    @include('modal.edit', ['user' => $users])
 
     <!-- Lista de Usuarios -->
     <div class="bg-warning-subtle shadow-md rounded-lg p-4">
@@ -41,10 +41,16 @@
 
 
                             <!-- Botón para Editar -->
-                            <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editUserModal"
+                            @if ($user->role === 'superAdmin')
+                            <a href="{{ route('user.index') }}" class="btn btn-warning">
+                                Editar
+                            </a>
+                            @else<button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editUserModal"
                                 onclick="fillEditModal('{{ $user->id }}', '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ addslashes($user->role) }}')">
                                 Editar
                             </button>
+
+                            @endif
 
                             <!-- Botón para Eliminar -->
                             @if ($user->role !== 'superAdmin')
@@ -56,6 +62,12 @@
                             @if (!$user->email_verified_at)
                             <button onclick="verifyUser('{{ $user->id }}')" class="btn btn-success">
                                 Verificar
+                            </button>
+                            @endif
+
+                            @if ($user->email_verified_at && $user->role !== 'superAdmin')
+                            <button onclick="desVerifyUser('{{ $user->id }}')" class="btn btn-info">
+                                Desverificar
                             </button>
                             @endif
                         </div>
@@ -74,8 +86,20 @@
 
 <script>
     function verifyUser(userId) {
+        // Construir la URL base
+        // Por ejemplo, si la URL actual es:
+        // http://44.203.207.210/projects/userManagement/userManagementApp1.0/public/superAdmin?page=3
+        // extraemos la parte hasta "public" para luego agregar "/superAdmin/edit/{id}"
+        let pathName = window.location.pathname;
+        // Buscamos la posición de "/superAdmin" en la ruta
+        let pos = pathName.indexOf('/superAdmin');
+        // Obtenemos la parte base de la ruta
+        let basePath = (pos !== -1) ? pathName.substring(0, pos) : '';
+        // Armamos la nueva URL de acción
+        let actionUrl = window.location.origin + basePath + '/superAdmin/verify/' + userId;
+        document.getElementById('edit-user-form').action = actionUrl;
         if (confirm('¿Estás seguro de que quieres verificar este usuario?')) {
-            fetch(`/superAdmin/verify/${userId}`, {
+            fetch(actionUrl, {
                     method: 'PATCH',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -98,34 +122,39 @@
         }
     }
 
-    function fillEditModal(id, name, email, role) {
-        document.getElementById('edit-name').value = name;
-        document.getElementById('edit-email').value = email;
-        document.getElementById('edit-role').value = role;
-        document.getElementById('edit-user-form').action = '/superAdmin/edit/' + id;
-    }
-
-
-    function deleteUser(userId) {
-        if (confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
-            fetch(`/superAdmin/delete/${userId}`, {
-                    method: 'DELETE',
+    function desVerifyUser(userId) {
+        // Construir la URL base
+        // Por ejemplo, si la URL actual es:
+        // http://44.203.207.210/projects/userManagement/userManagementApp1.0/public/superAdmin?page=3
+        // extraemos la parte hasta "public" para luego agregar "/superAdmin/edit/{id}"
+        let pathName = window.location.pathname;
+        // Buscamos la posición de "/superAdmin" en la ruta
+        let pos = pathName.indexOf('/superAdmin');
+        // Obtenemos la parte base de la ruta
+        let basePath = (pos !== -1) ? pathName.substring(0, pos) : '';
+        // Armamos la nueva URL de acción
+        let actionUrl = window.location.origin + basePath + '/superAdmin/desVerify/' + userId;
+        document.getElementById('edit-user-form').action = actionUrl;
+        if (confirm('¿Estás seguro de que quieres desverificar este usuario?')) {
+            fetch(actionUrl, {
+                    method: 'PATCH',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json'
-                    }
+                        'Content-Type': 'application/json',
+                    },
                 })
                 .then(response => {
+                    console.log(response);
                     if (response.ok) {
-                        alert('Usuario eliminado con éxito.');
-                        location.reload();
+                        alert('Usuario desverificado correctamente.');
+                        location.reload(); // Recarga la página para reflejar los cambios
                     } else {
-                        alert('Hubo un problema al eliminar el usuario.');
+                        alert('Hubo un problema al desverificar el usuario.');
                     }
                 })
                 .catch(error => {
-                    console.error('Error al eliminar:', error);
-                    alert('Error al intentar eliminar el usuario.');
+                    console.error('Error al desverificar:', error);
+                    alert('Error al intentar desverificar el usuario.');
                 });
         }
     }
@@ -147,8 +176,56 @@
         emailField.value = email;
         roleField.value = role;
 
-        // Configurar la acción del formulario
-        document.getElementById('edit-user-form').action = `/superAdmin/edit/${id}`;
+        // Construir la URL base
+        // Por ejemplo, si la URL actual es:
+        // http://44.203.207.210/projects/userManagement/userManagementApp1.0/public/superAdmin?page=3
+        // extraemos la parte hasta "public" para luego agregar "/superAdmin/edit/{id}"
+        let pathName = window.location.pathname;
+        // Buscamos la posición de "/superAdmin" en la ruta
+        let pos = pathName.indexOf('/superAdmin');
+        // Obtenemos la parte base de la ruta
+        let basePath = (pos !== -1) ? pathName.substring(0, pos) : '';
+        // Armamos la nueva URL de acción
+        let actionUrl = window.location.origin + basePath + '/superAdmin/edit/' + id;
+        document.getElementById('edit-user-form').action = actionUrl;
+    }
+
+
+
+    function deleteUser(userId) {
+         // Construir la URL base
+        // Por ejemplo, si la URL actual es:
+        // http://44.203.207.210/projects/userManagement/userManagementApp1.0/public/superAdmin?page=3
+        // extraemos la parte hasta "public" para luego agregar "/superAdmin/edit/{id}"
+        let pathName = window.location.pathname;
+        // Buscamos la posición de "/superAdmin" en la ruta
+        let pos = pathName.indexOf('/superAdmin');
+        // Obtenemos la parte base de la ruta
+        let basePath = (pos !== -1) ? pathName.substring(0, pos) : '';
+        // Armamos la nueva URL de acción
+        let actionUrl = window.location.origin + basePath + '/superAdmin/delete/' + userId;
+        document.getElementById('edit-user-form').action = actionUrl;
+        if (confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
+            fetch(actionUrl, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Usuario eliminado con éxito.');
+                        location.reload();
+                    } else {
+                        alert('Hubo un problema al eliminar el usuario.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al eliminar:', error);
+                    alert('Error al intentar eliminar el usuario.');
+                });
+        }
     }
 </script>
 @endsection

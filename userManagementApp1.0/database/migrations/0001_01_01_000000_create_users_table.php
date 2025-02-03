@@ -22,6 +22,14 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        $user = new \App\Models\User();
+        $user->name = 'Admin';
+        $user->email = 'admin@test.es';
+        $user->password = \Illuminate\Support\Facades\Hash::make('password');
+        $user->email_verified_at = now();
+        $user->role = 'superAdmin';
+        $user->save();
+
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');

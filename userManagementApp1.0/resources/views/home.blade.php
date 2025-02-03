@@ -22,7 +22,7 @@
                         @elseif (Auth::user()->role === 'admin')
                             <a href="{{ route('admin.index') }}" class="btn btn-primary">Ir al Panel de Admin</a>
                         @else
-                            <a href="{{ route('home') }}" class="btn btn-primary">Ir al Inicio</a>
+                            <a href="{{ route('user.index') }}" class="btn btn-primary">Ir al Inicio</a>
                         @endif
                     </div>
                 </div>

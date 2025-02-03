@@ -1,1 +1,234 @@
-alahuakbar
+@extends('layouts.app')
+
+@section('content')
+<div class="bg-secondary-subtle container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">Panel de Admin</h1>
+
+    <!-- Botón para abrir la modal de crear usuario -->
+    <button class="btn btn-primary mb-4" data-bs-toggle="modal" data-bs-target="#createAdminUserModal">
+        Crear Nuevo Usuario
+    </button>
+
+    <!-- Incluir las modales -->
+    @include('modal.admincreate')
+    @include('modal.edit', ['user' => $users])
+
+
+    <!-- Lista de Usuarios -->
+    <div class="bg-warning-subtle shadow-md rounded-lg p-4">
+        <h2 class="text-xl font-semibold mb-4">Usuarios registrados</h2>
+        <a href="{{ route('user.index') }}" class="btn btn-warning mb-4">
+            Editarme 
+        </a>
+        <table class="table table-dark table-striped-columns">
+            <thead>
+                <tr>
+                    <th class="text-center">Nombre</th>
+                    <th class="text-center">Correo</th>
+                    <th class="text-center">Verificado</th>
+                    <th class="text-center">Rol</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($users as $user)
+                @if ($user->role !== 'superAdmin')
+                <tr>
+                    <td>{{ $user->name }}</td>
+                    <td>{{ $user->email }}</td>
+                    <td>{{ $user->email_verified_at ? 'SI' : 'NO' }}</td>
+                    <td>{{ $user->role }}</td>
+                    <td class="text-center">
+                        <div class="flex justify-center space-x-2">
+                            <!-- Botón para Editar -->
+
+                            @if (auth()->user()->id === $user->id)
+                            <!-- Botón para redirigir a otra vista -->
+                            <a href="{{ route('user.index') }}" class="btn btn-warning">
+                                Editar
+                            </a>
+                            @else
+                            <!-- Botón para abrir el modal -->
+                            <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editUserModal"
+                                onclick="fillEditModal('{{ $user->id }}', '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ addslashes($user->role) }}')">
+                                Editar
+                            </button>
+                            @endif
+
+
+                            <!-- Botón para Eliminar -->
+                            <button onclick="deleteUser('{{ $user->id }}')" class="btn btn-danger">
+                                Eliminar
+                            </button>
+
+                            @if (!$user->email_verified_at)
+                            <button onclick="verifyUser('{{ $user->id }}')" class="btn btn-success">
+                                Verificar
+                            </button>
+                            @endif
+
+                            @if ($user->email_verified_at)
+                            <button onclick="desVerifyUser('{{ $user->id }}')" class="btn btn-info">
+                                Desverificar
+                            </button>
+                            @endif
+                        </div>
+                    </td>
+                </tr>
+                @endif
+                @endforeach
+            </tbody>
+        </table>
+
+        <!-- Paginación -->
+        <div class="mt-4">
+            {{ $users->links() }}
+        </div>
+    </div>
+</div>
+
+<script>
+    function verifyUser(userId) {
+        // Construir la URL base
+        // Por ejemplo, si la URL actual es:
+        // http://44.203.207.210/projects/userManagement/userManagementApp1.0/public/superAdmin?page=3
+        // extraemos la parte hasta "public" para luego agregar "/superAdmin/edit/{id}"
+        let pathName = window.location.pathname;
+        // Buscamos la posición de "/superAdmin" en la ruta
+        let pos = pathName.indexOf('/admin');
+        // Obtenemos la parte base de la ruta
+        let basePath = (pos !== -1) ? pathName.substring(0, pos) : '';
+        // Armamos la nueva URL de acción
+        let actionUrl = window.location.origin + basePath + '/admin/verify/' + userId;
+        document.getElementById('edit-user-form').action = actionUrl;
+        if (confirm('¿Estás seguro de que quieres verificar este usuario?')) {
+            fetch(actionUrl, {
+                    method: 'PATCH',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => {
+                    console.log(response);
+                    if (response.ok) {
+                        alert('Usuario verificado correctamente.');
+                        location.reload(); // Recarga la página para reflejar los cambios
+                    } else {
+                        alert('Hubo un problema al verificar el usuario.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al verificar:', error);
+                    alert('Error al intentar verificar el usuario.');
+                });
+        }
+    }
+
+    function desVerifyUser(userId) {
+        // Construir la URL base
+        // Por ejemplo, si la URL actual es:
+        // http://44.203.207.210/projects/userManagement/userManagementApp1.0/public/superAdmin?page=3
+        // extraemos la parte hasta "public" para luego agregar "/superAdmin/edit/{id}"
+        let pathName = window.location.pathname;
+        // Buscamos la posición de "/superAdmin" en la ruta
+        let pos = pathName.indexOf('/admin');
+        // Obtenemos la parte base de la ruta
+        let basePath = (pos !== -1) ? pathName.substring(0, pos) : '';
+        // Armamos la nueva URL de acción
+        let actionUrl = window.location.origin + basePath + '/admin/desVerify/' + userId;
+        document.getElementById('edit-user-form').action = actionUrl;
+        if (confirm('¿Estás seguro de que quieres desverificar este usuario?')) {
+            fetch(actionUrl, {
+                    method: 'PATCH',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => {
+                    console.log(response);
+                    if (response.ok) {
+                        alert('Usuario desverificado correctamente.');
+                        location.reload(); // Recarga la página para reflejar los cambios
+                    } else {
+                        alert('Hubo un problema al desverificar el usuario.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al desverificar:', error);
+                    alert('Error al intentar desverificar el usuario.');
+                });
+        }
+    }
+
+    function fillEditModal(id, name, email, role) {
+        // Habilitar/deshabilitar según el rol
+        const roleField = document.getElementById('edit-role');
+        const emailField = document.getElementById('edit-email');
+        if (role === 'superAdmin') {
+            roleField.disabled = true;
+            emailField.readOnly = true;
+        } else {
+            roleField.disabled = false;
+            emailField.readOnly = false;
+        }
+
+        // Actualizar campos del formulario
+        document.getElementById('edit-name').value = name;
+        emailField.value = email;
+        roleField.value = role;
+
+        // Construir la URL base
+        // Por ejemplo, si la URL actual es:
+        // http://44.203.207.210/projects/userManagement/userManagementApp1.0/public/superAdmin?page=3
+        // extraemos la parte hasta "public" para luego agregar "/superAdmin/edit/{id}"
+        let pathName = window.location.pathname;
+        // Buscamos la posición de "/superAdmin" en la ruta
+        let pos = pathName.indexOf('/admin');
+        // Obtenemos la parte base de la ruta
+        let basePath = (pos !== -1) ? pathName.substring(0, pos) : '';
+        // Armamos la nueva URL de acción
+        let actionUrl = window.location.origin + basePath + '/admin/edit/' + id;
+        document.getElementById('edit-user-form').action = actionUrl;
+    }
+
+
+
+    function deleteUser(userId) {
+        // Construir la URL base
+        // Por ejemplo, si la URL actual es:
+        // http://44.203.207.210/projects/userManagement/userManagementApp1.0/public/superAdmin?page=3
+        // extraemos la parte hasta "public" para luego agregar "/superAdmin/edit/{id}"
+        let pathName = window.location.pathname;
+        // Buscamos la posición de "/superAdmin" en la ruta
+        let pos = pathName.indexOf('/admin');
+        // Obtenemos la parte base de la ruta
+        let basePath = (pos !== -1) ? pathName.substring(0, pos) : '';
+        // Armamos la nueva URL de acción
+        let actionUrl = window.location.origin + basePath + '/admin/delete/' + userId;
+        document.getElementById('edit-user-form').action = actionUrl;
+        if (confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
+            fetch(actionUrl, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Usuario eliminado con éxito.');
+                        location.reload();
+                    } else {
+                        alert('Hubo un problema al eliminar el usuario.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al eliminar:', error);
+                    alert('Error al intentar eliminar el usuario.');
+                });
+        }
+    }
+</script>
+@endsection
