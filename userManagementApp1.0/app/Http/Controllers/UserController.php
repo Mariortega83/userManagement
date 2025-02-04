@@ -27,13 +27,19 @@ class UserController extends Controller
 
         // Actualiza los datos del usuario
         $user = Auth::user();
+
+        if ($user->email !== $request->email) {
+            $user->email_verified_at = null;
+        }
+
+
         $user->name = $request->name;
         $user->email = $request->email;
 
         if (!empty($request->input('password'))) {
             $user->password = bcrypt($request->input('password'));
         }
-        
+
 
         $user->save();
 

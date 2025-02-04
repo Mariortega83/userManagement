@@ -10,7 +10,7 @@ class SuperAdminController extends Controller
 
     public function home()
     {
-        
+
         $users = User::paginate(5);
 
         // Pasar los usuarios a la vista
@@ -56,26 +56,30 @@ class SuperAdminController extends Controller
             'role' => 'required|in:user,admin',
             'password' => 'nullable|min:8|confirmed', // Validación de la contraseña
         ]);
-    
+
         // Buscar el usuario y actualizar los datos
         $user = User::findOrFail($id);
+
+        if ($user->email !== $request->input('email')) {
+            $user->verified_at = null;
+        }
         $user->name = $request->input('name');
         $user->email = $request->input('email');
         $user->role = $request->input('role');
-    
+
         // Si el campo de contraseña no está vacío, actualizamos la contraseña
         if (!empty($request->input('password'))) {
             $user->password = bcrypt($request->input('password'));
         }
-        
-    
+
+
         // Guardar los cambios
         $user->save();
-    
+
         // Redirigir a la página anterior con un mensaje de éxito
         return back()->with('success', 'Usuario actualizado correctamente.');
     }
-    
+
 
 
     public function destroy($id)

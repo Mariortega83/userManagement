@@ -58,8 +58,13 @@ class AdminController extends Controller
             'password' => 'nullable|min:8|confirmed', // Validación de la contraseña
         ]);
 
+        
         // Buscar el usuario y actualizar los datos
         $user = User::findOrFail($id);
+
+        if ($user->email !== $request->input('email')) {
+            $user->verified_at = null;
+        }
         $user->name = $request->input('name');
         $user->email = $request->input('email');
         $user->role = $request->input('role');
