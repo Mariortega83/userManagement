@@ -19,7 +19,7 @@ class AdminMiddleware
         $user = Auth::user();
 
         // Verificar si el usuario es admin o superior
-        if (!$user || !in_array($user->role, ['admin', 'superAdmin'])) {
+        if (!$user || !in_array($user->role, ['admin'])) {
            return redirect('/home');
         }
 

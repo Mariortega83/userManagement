@@ -65,9 +65,10 @@ class AdminController extends Controller
         $user->role = $request->input('role');
 
         // Si el campo de contraseña no está vacío, actualizamos la contraseña
-        if ($request->has('password') && $request->input('password') !== '') {
+        if (!empty($request->input('password'))) {
             $user->password = bcrypt($request->input('password'));
         }
+        
 
         // Guardar los cambios
         $user->save();
