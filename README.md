@@ -27,7 +27,7 @@ Esta aplicación ha sido diseñada para optimizar la gestión de usuarios, ofrec
 ![Admin Dashboard](fotos/admin.png)
 
 ### 5. Panel User
-![Editar Usuario](fotos/foto2.png)
+![Editar Usuario](fotos/foto2.jpg.png)
 
 ### 6. Editar Usuario con Modal
 ![Editar Usuario](fotos/editmodal.png)
